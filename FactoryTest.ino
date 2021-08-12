@@ -436,14 +436,12 @@ void rfid(){
     M5.Lcd.print("RFID");
     M5.Lcd.setCursor(0, 60, 4);
     M5.Lcd.println("PIN : SCL:22,SDA:21");
-    // M5.Lcd.setCursor(127, 210, 4);
+    //M5.Lcd.setCursor(127, 210, 4);
     // M5.Lcd.println("Enter");
-
     //if(RFID_Flag){
     mfrc522.PCD_Init();             // Init MFRC522
-    byte v = mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
+    mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
     //RFID_Flag=false;
-    //}
   }
   M5.Lcd.setCursor(0, 125, 4);
   M5.Lcd.print("UID:");
@@ -456,9 +454,8 @@ void rfid(){
     M5.Lcd.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
     M5.Lcd.print(mfrc522.uid.uidByte[i], HEX);
   }
+  M5.Lcd.fillRect(127, 210,30,30,BLACK);
 }
-
-/*
 
 
 int rx_num = 0;
@@ -525,7 +522,7 @@ void uart485(){
   if(rx_count == 10)
     Serial2.write('a');
 }
-*/
+
 void setup() {
   M5.begin();
   dacWrite(25, 0);
@@ -590,18 +587,15 @@ void loop() {
     break;
     case 12:stmpmotor();
     mfrc522.PCD_Reset();
-
-    //M5.Lcd.fillRect(120,210,70,40,BLACK);
     break;
     case 13:rfid();
     break;
-    /*case 14:uart232();
-    //M5.Lcd.fillRect(120,210,70,40,BLACK);
+    case 14:uart232();
     break;
     case 15:uart485();
     break;
     case 16:luminosity(); //microphone
-    break; */
+    break;
     default:break;
   }
 }
