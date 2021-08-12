@@ -424,29 +424,13 @@ void stmpmotor(void){
 
 
 MFRC522 mfrc522(0x28);
-void ShowReaderDetails() {
-  // Get the MFRC522 software version
-  byte v = mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
-  Serial.print(F("MFRC522 Software Version: 0x"));
-  Serial.print(v, HEX);
-  if (v == 0x91)
-    Serial.print(F(" = v1.0"));
-  else if (v == 0x92)
-    Serial.print(F(" = v2.0"));
-  else
-    Serial.print(F(" (unknown)"));
-  Serial.println("");
-  // When 0x00 or 0xFF is returned, communication probably failed
-  if ((v == 0x00) || (v == 0xFF)) {
-    Serial.println(F("WARNING: Communication failure, is the MFRC522 properly connected?"));
-  }
-}
+
 void rfid(){
   if(!setup_flag){
     setup_flag = 1;
     gpio_reset_pin(GPIO_NUM_22);
     gpio_reset_pin(GPIO_NUM_21);
-    Wire.begin();                   // Initialize I2C
+    Wire.begin();
 
     M5.Lcd.setCursor(140, 0, 4);
     M5.Lcd.print("RFID");
@@ -456,20 +440,19 @@ void rfid(){
     // M5.Lcd.println("Enter");
 
     //if(RFID_Flag){
-      mfrc522.PCD_Init();             // Init MFRC522
-      ShowReaderDetails();            // Show details of PCD - MFRC522 Card Reader details
-      //RFID_Flag=false;
+    mfrc522.PCD_Init();             // Init MFRC522
+    byte v = mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
+    //RFID_Flag=false;
     //}
   }
-  if (!mfrc522.PICC_IsNewCardPresent() || ! mfrc522.PICC_ReadCardSerial()) {
-    //delay(50);
-    //M5.Lcd.println("Scan PICC to see UID, type, and data blocks...");
-    //return;
-  }
-  // Dump UID
   M5.Lcd.setCursor(0, 125, 4);
   M5.Lcd.print("UID:");
+  if (!mfrc522.PICC_IsNewCardPresent() || ! mfrc522.PICC_ReadCardSerial()) {
+    return;
+  }
   for (byte i = 0; i < mfrc522.uid.size; i++) {
+    Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
+    Serial.print(mfrc522.uid.uidByte[i], HEX);
     M5.Lcd.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
     M5.Lcd.print(mfrc522.uid.uidByte[i], HEX);
   }
@@ -606,6 +589,8 @@ void loop() {
     case 11:servo();
     break;
     case 12:stmpmotor();
+    mfrc522.PCD_Reset();
+
     //M5.Lcd.fillRect(120,210,70,40,BLACK);
     break;
     case 13:rfid();
