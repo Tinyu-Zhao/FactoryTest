@@ -16,8 +16,6 @@ uint8_t setup_flag = 0;
 bool RFID_Flag=false;
 
 void joystick(void) {
-
-  // put your main code here, to run repeatedly:
   uint16_t x_data = 0;
   uint16_t y_data = 0;
   uint8_t button_data = 0;
@@ -723,7 +721,7 @@ void loop() {
     break;
     case 15:uart485();
     break;
-    case 16:luminosity();
+    case 16:luminosity(); //microphone
     break;
     default:break;
   }
