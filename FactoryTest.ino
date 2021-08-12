@@ -8,22 +8,16 @@
 #include <Adafruit_BMP280.h>
 #include "qmp6988.h"   // @IAMLIUBO  2021-07-20
 #include "UNIT_ENV.h"
-#include <Wire.h>
-#include "Adafruit_Sensor.h"
 
-int count_flag = 0;
+int count_flag = 3;
 uint8_t setup_flag = 0;
 bool RFID_Flag=false;
 
 void joystick(void) {
-  uint16_t x_data = 0;
-  uint16_t y_data = 0;
-  uint8_t button_data = 0;
-
-  M5.Lcd.setCursor(100, 30, 4);
+  M5.Lcd.setCursor(100, 0, 4);
   M5.Lcd.println("JOYSTICK");
-  M5.Lcd.setCursor(0, 60, 4);
-  M5.Lcd.println("PIN : x_adc:35,y_adc:36,button:2");
+  M5.Lcd.setCursor(0, 30 ,4);
+  M5.Lcd.println("PIN: X_ADC    35\n        \t  Y_ADC    36\n        \t  BUTTON  2");
 
   if(!setup_flag){
     setup_flag = 1;
@@ -32,28 +26,20 @@ void joystick(void) {
     gpio_reset_pin(GPIO_NUM_36);
     pinMode(2, INPUT_PULLUP);
   }
-  x_data = analogRead(35);
-  y_data = analogRead(36);
-  button_data = digitalRead(2);
-
-  Serial.printf("x:%0d y:%0d button:%d\n", x_data, y_data, button_data);
-
-  M5.Lcd.setCursor(30, 120, 4);
-  M5.Lcd.printf("x:%04d y:%04d button:%d\n", x_data, y_data, button_data);
-
+  M5.Lcd.setCursor(10, 140, 4);               //x_data          y_data          button_data
+  M5.Lcd.printf("X:%04d  Y:%04d  BUTTON:%d\n", analogRead(35), analogRead(36), digitalRead(2));
   delay(200);
 }
 
+//DAC
 #define DAC_ADDR 0x4C
 
 void outVoltage(uint8_t ch,uint16_t v){
-
-   Wire.beginTransmission(DAC_ADDR);
-   Wire.write(0x10|(ch<<1));
-
-   Wire.write((v >> 2) & 0xff);
-   Wire.write((v << 6) & 0xff);
-   Wire.endTransmission();
+  Wire.beginTransmission(DAC_ADDR);
+  Wire.write(0x10|(ch<<1));
+  Wire.write((v >> 2) & 0xff);
+  Wire.write((v << 6) & 0xff);
+  Wire.endTransmission();
 }
 void dac(){
   if(!setup_flag){
@@ -62,15 +48,16 @@ void dac(){
     gpio_reset_pin(GPIO_NUM_22);
     Wire.begin();
 
-    M5.Lcd.setCursor(140, 30, 4);
+    M5.Lcd.setCursor(120, 0, 4);
     M5.Lcd.print("DAC");
-    M5.Lcd.setCursor(0, 60, 4);
-    M5.Lcd.println("PIN : SCL:22,SDA:21");
-
-    outVoltage(0,256);   //1.25v
-    outVoltage(1,512);   //2.50v
-    outVoltage(2,768);   //3.75v
-    outVoltage(3,1023);  //5.00v
+    M5.Lcd.setCursor(0, 30, 4);
+    M5.Lcd.println("PIN: SCL:22\n          SDA:21");
+    M5.Lcd.setCursor(0, 125, 4);
+    M5.Lcd.println("CH0:1.25v  CH1:2.50v\nCH2:3.75v  CH3:5.00v");
+    // outVoltage(0,256);   //1.25v
+    // outVoltage(1,512);   //2.50v
+    // outVoltage(2,768);   //3.75v
+    // outVoltage(3,1023);  //5.00v
   }
   outVoltage(0,256);   //1.25v
   outVoltage(1,512);   //2.50v
@@ -78,14 +65,13 @@ void dac(){
   outVoltage(3,1023);  //5.00v
 }
 
+//ADC
 #define ADC_ADDR 0x48
 
 uint16_t InVoltage(uint8_t ch){
-
   uint8_t  data_L = 0;
   uint8_t  data_H = 0;
   uint16_t data_adc = 0;
-  
   Wire.beginTransmission(ADC_ADDR);
   Wire.write(0X01);
   Wire.write(0XC0 | (ch << 4)); 
@@ -97,59 +83,64 @@ uint16_t InVoltage(uint8_t ch){
   Wire.endTransmission();
 
   delay(50);
-  
+
   Wire.requestFrom(ADC_ADDR, 2);
   while(Wire.available()){
     data_H = Wire.read();
     data_L = Wire.read();
   }
-  
+
   data_adc = (data_H << 8) | data_L;
   return data_adc;
 }
 
 void adc(){
-
-  uint16_t adc_ch0 = 0;
-  uint16_t adc_ch1 = 0;
-  uint16_t adc_ch2 = 0;
-  uint16_t adc_ch3 = 0;
-  
   if(!setup_flag){
     setup_flag = 1;
     gpio_reset_pin(GPIO_NUM_21);
     gpio_reset_pin(GPIO_NUM_22);
     Wire.begin();
 
-    M5.Lcd.setCursor(140, 30, 4);
+    M5.Lcd.setCursor(140, 0, 4);
     M5.Lcd.print("ADC");
-    M5.Lcd.setCursor(0, 60, 4);
-    M5.Lcd.println("PIN : SCL:22,SDA:21");  
+    M5.Lcd.setCursor(0, 30, 4);
+    M5.Lcd.println("PIN: SCL:22\n          SDA:21\n L:GND R:5v/3.3v To CH0~3");
   }
-  adc_ch0 = InVoltage(0);
-  adc_ch1 = InVoltage(1);
-  adc_ch2 = InVoltage(2);
-  adc_ch3 = InVoltage(3);
-  Serial.printf("ch0:%d ch1:%d ch2:%d  ch3:%d\n", adc_ch0, adc_ch1, adc_ch2,adc_ch3);
 
-  M5.Lcd.setCursor(0, 120, 4);
-  M5.Lcd.printf("ch0:%05d ch1:%05d\n", adc_ch0, adc_ch1);
-  M5.Lcd.printf("ch2:%05d ch3:%05d\n", adc_ch2, adc_ch3);
-  //delay(500);  
+  M5.Lcd.setCursor(0, 125, 4);
+  M5.Lcd.printf(" CH0:%05d CH1:%05d\n", InVoltage(0), InVoltage(1)); //adc_ch0、1
+  M5.Lcd.printf(" CH2:%05d CH3:%05d\n", InVoltage(2), InVoltage(3)); //adc_ch2、3
+  //delay(500);
 }
 
-
+//Encoder
 const int phaseA = 2;
 const int phaseB = 13;
 const int Button = 15;
 #define GET_CODE() uint8_t(digitalRead(phaseA) << 4 | digitalRead(phaseB))
+int32_t count = 65536,count_last = 65536,count_change = 0;
+uint8_t code = 0,code_old = 0;
 
-int32_t count = 65536;
-int32_t count_last = 65536;
-int32_t count_change = 0;
-uint8_t code = 0;
-uint8_t code_old = 0;
-void encoderEvent() {
+void encoder(){
+  if(!setup_flag){
+    setup_flag = 1;
+    gpio_reset_pin(GPIO_NUM_2);
+    gpio_reset_pin(GPIO_NUM_13);
+    gpio_reset_pin(GPIO_NUM_15);
+    pinMode(phaseA, INPUT_PULLUP);
+    pinMode(phaseB, INPUT_PULLUP);
+    pinMode(Button, INPUT_PULLUP);
+
+    M5.Lcd.setCursor(100, 0, 4);
+    M5.Lcd.println("ENCODER");
+    M5.Lcd.setCursor(0, 30, 4);
+    M5.Lcd.println("PIN: A:2\n          B:13\n          Button:15");
+
+    code = GET_CODE();
+    code_old = code;
+  }
+
+  uint8_t value = digitalRead(Button);
   code = GET_CODE();
   if(code != code_old) {
     if(code == 0x00) {
@@ -163,43 +154,13 @@ void encoderEvent() {
     }
     code_old = code;
   }
-}
-
-void encoder(){
-  
-  if(!setup_flag){
-    setup_flag = 1;
-    gpio_reset_pin(GPIO_NUM_2);
-    gpio_reset_pin(GPIO_NUM_13);
-    gpio_reset_pin(GPIO_NUM_15);
-    pinMode(phaseA, INPUT_PULLUP);
-    pinMode(phaseB, INPUT_PULLUP);
-    pinMode(Button, INPUT_PULLUP);
-    //M5.Lcd.setCursor(100, 0, 4);
-    //M5.Lcd.print("ENCODER");
-
-    M5.Lcd.setCursor(100, 30, 4);
-    M5.Lcd.println("ENCODER");
-    M5.Lcd.setCursor(0, 60, 4);
-    M5.Lcd.println("PIN : a:2,b:13,button:15");
-
-    code = GET_CODE();
-    code_old = code;
-  }
-
-  uint8_t value = digitalRead(Button);
-  encoderEvent();
-  Serial.printf("code = %d,button = %d\r\n ",count_change,value);
-
-  M5.Lcd.setCursor(30, 120, 4);
-  M5.Lcd.printf("code = %05d,button = %d\r\n ",count_change,value);
+  M5.Lcd.setCursor(0, 125, 4);
+  M5.Lcd.printf("Angle = %05d\nButton = %d",count_change,value);
   delay(1);
-
 }
 
 //matrix
 #define DATA_PIN    15
-//#define CLK_PIN   4
 #define LED_TYPE    WS2811
 #define COLOR_ORDER GRB
 #define NUM_LEDS    64
@@ -208,45 +169,37 @@ CRGB leds[NUM_LEDS];
 
 int led_count = 0;
 void matrix(){
-   if(!setup_flag){
-    setup_flag = 1; 
-  
-   gpio_reset_pin(GPIO_NUM_15);
-    
-   M5.Lcd.setCursor(100, 30, 4);
-   M5.Lcd.println("MATRIX");
-   M5.Lcd.setCursor(0, 60, 4);
-   M5.Lcd.println("PIN : SIGNAL:15");
+  if(!setup_flag){
+    setup_flag = 1;
+    gpio_reset_pin(GPIO_NUM_15);
 
-   //FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-   //FastLED.addLeds<NEOPIXEL,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-   FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
-   //NEOPIXEL
-   FastLED.setBrightness(BRIGHTNESS);
-   led_count = 0;
-   }
-   led_count++;
-   if(led_count > 2000)led_count  = 0;
-   if((led_count / 500)  == 0){
-   for(int i = 0; i < 64; i++)
-   leds[i] = CRGB::Red;
-   FastLED.show();
-   }
+    M5.Lcd.setCursor(100, 0, 4);
+    M5.Lcd.println("MATRIX");
+    M5.Lcd.setCursor(0, 30, 4);
+    M5.Lcd.println("PIN: SIGNAL:15");
 
-
-  if((led_count / 500)  == 1){
+    FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
+    //NEOPIXEL
+    FastLED.setBrightness(BRIGHTNESS);
+    led_count = 0;
+  }
+  led_count++;
+  if(led_count > 2000)led_count  = 0;
+  if((led_count / 500)  == 0){
+    for(int i = 0; i < 64; i++)
+    leds[i] = CRGB::Red;
+    FastLED.show();
+  }else if((led_count / 500)  == 1){
     for(int i = 0; i < 64; i++)
     leds[i] = CRGB::Green;
     FastLED.show();
-  }
-  if((led_count / 500)  == 2){
+  }else if((led_count / 500)  == 2){
     for(int i = 0; i < 64; i++)
     leds[i] = CRGB::Blue;
     FastLED.show();
   }
-
 }
-
+/*
 //keyboard
 const byte ROWS = 4; //four rows
 const byte COLS = 4; //three columns
@@ -264,7 +217,7 @@ Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 //Keypad keypad;
 void key(){
   if(!setup_flag){
-    setup_flag = 1; 
+    setup_flag = 1;
     //Wire.end();
 
     //Wire.end();
@@ -279,7 +232,7 @@ void key(){
     gpio_reset_pin(GPIO_NUM_13);
     gpio_reset_pin(GPIO_NUM_15);
 
-    M5.Lcd.setCursor(100, 30, 4);
+    M5.Lcd.setCursor(100, 0, 4);
     M5.Lcd.println("KEYBOARD");
     M5.Lcd.setCursor(0, 60, 4);
     M5.Lcd.println("PIN: R0:17,R1:16,R2:21,R3:22");
@@ -303,7 +256,7 @@ void dcmotor(){
    if(!setup_flag){
     setup_flag = 1; 
 
-    M5.Lcd.setCursor(100, 30, 4);
+    M5.Lcd.setCursor(100, 0, 4);
     M5.Lcd.println("DC-MOTOR");
     M5.Lcd.setCursor(0, 60, 4);
     M5.Lcd.println("PIN : M+:13,M-:15,ENA:21,\nENB:22");
@@ -355,7 +308,7 @@ void servo(){
     setup_flag = 1;
     gpio_reset_pin(GPIO_NUM_15);
 
-    M5.Lcd.setCursor(100, 30, 4);
+    M5.Lcd.setCursor(100, 0, 4);
     M5.Lcd.println("SERVO");
     M5.Lcd.setCursor(0, 60, 4);
     M5.Lcd.println("PIN: 15\nConnect to Power");
@@ -392,7 +345,7 @@ void stmpmotor(void){
     gpio_reset_pin(GPIO_NUM_12);
     gpio_reset_pin(GPIO_NUM_13);
 
-    M5.Lcd.setCursor(100, 30, 4);
+    M5.Lcd.setCursor(100, 0, 4);
     M5.Lcd.println("STEPMOTOR");
     M5.Lcd.setCursor(0, 60, 4);
     M5.Lcd.println("PIN :A:2, B:5, C:12, D:13");
@@ -449,7 +402,7 @@ void rfid(){
     gpio_reset_pin(GPIO_NUM_21);
     Wire.begin();                   // Initialize I2C
 
-    M5.Lcd.setCursor(140, 30, 4);
+    M5.Lcd.setCursor(140, 0, 4);
     M5.Lcd.print("RFID");
     M5.Lcd.setCursor(0, 60, 4);
     M5.Lcd.println("PIN : SCL:22,SDA:21");
@@ -470,7 +423,7 @@ void rfid(){
     //return;
     
   }
-*/
+
   if ( ! mfrc522.PICC_IsNewCardPresent() || ! mfrc522.PICC_ReadCardSerial() ) {
     delay(50);
     return;
@@ -499,7 +452,7 @@ void dht(){
   if(!setup_flag){
     setup_flag = 1;
     Wire.begin();
-    M5.Lcd.setCursor(100, 30, 4);
+    M5.Lcd.setCursor(100, 0, 4);
     M5.Lcd.print("TEMPERATURE");
     M5.Lcd.setCursor(0, 60, 4);
     M5.Lcd.println("PIN : SCL:22,SDA:21");
@@ -531,7 +484,7 @@ void air(){
     Wire.begin();
 
     qmp6988.init();   // @IAMLIUBO   2021-07-20
-    M5.Lcd.setCursor(80, 30, 4);
+    M5.Lcd.setCursor(80, 0, 4);
     M5.Lcd.print("AIR_PRESSURE");
     M5.Lcd.setCursor(0, 60, 4);
     M5.Lcd.println("PIN : SCL:22,SDA:21");
@@ -558,7 +511,7 @@ void luminosity(){
     gpio_reset_pin(GPIO_NUM_35);
     gpio_reset_pin(GPIO_NUM_2);
 
-    M5.Lcd.setCursor(80, 30, 4);
+    M5.Lcd.setCursor(80, 0, 4);
     if(count_flag == 7)
     M5.Lcd.print("LUMINOSITY");
     else 
@@ -622,7 +575,7 @@ void uart485(){
     gpio_reset_pin(GPIO_NUM_22);
     Serial2.begin(115200, SERIAL_8N1, 16, 17);
     Serial1.begin(115200, SERIAL_8N1, 22, 21);
-    M5.Lcd.setCursor(80, 30, 4);
+    M5.Lcd.setCursor(80, 0, 4);
     M5.Lcd.print("RS485");
     M5.Lcd.setCursor(0, 60, 4);
     M5.Lcd.println("PIN :TX:17,RX:16");
@@ -644,45 +597,41 @@ void uart485(){
   if(rx_count == 10)
     Serial2.write('a');
 }
+*/
 void setup() {
-  // put your setup code here, to run once:
   M5.begin();
   dacWrite(25, 0);
 
-  M5.Lcd.setCursor(90, 0, 4);
-  M5.Lcd.print("FactoryTest");
-
-  pinMode(37,INPUT_PULLUP);
-  pinMode(39,INPUT_PULLUP);
+  // M5.Lcd.setCursor(90, 0, 4);
+  // M5.Lcd.print("FactoryTest");
 
   M5.Lcd.setCursor(220, 210, 4);
   M5.Lcd.println("mode");
 
   M5.Lcd.setCursor(40, 210, 4);
   M5.Lcd.println("Back");
+  M5.Lcd.drawLine(0,120,320,120,YELLOW);
 }
 
-
 void loop() {
-  // put your main code here, to run repeatedly:
-  if(digitalRead(39) == LOW){
+  M5.update();
+  if(M5.BtnA.isPressed()){
     count_flag--;
     setup_flag = 0;
-    M5.Lcd.fillRect(0, 0, 80, 50, BLACK);
-    M5.Lcd.fillRect(0, 30, 360, 170, BLACK);
+   M5.Lcd.fillRect(0, 0, 360, 210, BLACK);
     while(digitalRead(39) == LOW);
-  }else if(digitalRead(38) == LOW){
+  }else if(M5.BtnB.isPressed()){
     RFID_Flag=true;
     while(digitalRead(38) == LOW);
-  }else if(digitalRead(37) == LOW){
+  }else if(M5.BtnC.isPressed()){
    count_flag++;
    setup_flag = 0;
-   M5.Lcd.fillRect(0, 0, 80, 50, BLACK);
-   M5.Lcd.fillRect(0, 30, 360, 170, BLACK);
+   M5.Lcd.fillRect(0, 0, 360, 210, BLACK);
    while(digitalRead(37) == LOW);
   }
   if(count_flag <= 0) count_flag = 0;
   else if(count_flag > 16) count_flag = 0;
+  M5.Lcd.drawLine(0,120,320,120,YELLOW);
   M5.Lcd.setCursor(0, 0, 4);
   M5.Lcd.println(count_flag+1);
 
@@ -691,13 +640,13 @@ void loop() {
     break;
     case 1:dac();
     break;
-    case 2:adc();
+     case 2:adc();
     break;
     case 3:encoder();
     break;
     case 4:matrix();
     break;
-    case 5:dht();
+ /*   case 5:dht();
     break;
     case 6:air();
     break;
@@ -722,7 +671,7 @@ void loop() {
     case 15:uart485();
     break;
     case 16:luminosity(); //microphone
-    break;
+    break; */
     default:break;
   }
 }
