@@ -392,7 +392,7 @@ void stmpmotor(void){
     M5.Lcd.setCursor(85, 0, 4);
     M5.Lcd.println("STEPMOTOR");
     M5.Lcd.setCursor(0, 30, 4);
-    M5.Lcd.println("PIN :A:2 B:5 C:12 D:13");
+    M5.Lcd.println("PIN: A:2    B:5 \n          C:12 D:13");
     pinMode(MOTOR_A, OUTPUT);
     pinMode(MOTOR_B, OUTPUT);
     pinMode(MOTOR_C, OUTPUT);
@@ -432,25 +432,24 @@ void rfid(){
     gpio_reset_pin(GPIO_NUM_21);
     Wire.begin();
 
-    M5.Lcd.setCursor(140, 0, 4);
+    M5.Lcd.setCursor(120, 0, 4);
     M5.Lcd.print("RFID");
-    M5.Lcd.setCursor(0, 60, 4);
-    M5.Lcd.println("PIN : SCL:22,SDA:21");
+    M5.Lcd.setCursor(0, 30, 4);
+    M5.Lcd.println("PIN: SCL:22\n          SDA:21");
     //M5.Lcd.setCursor(127, 210, 4);
     // M5.Lcd.println("Enter");
     //if(RFID_Flag){
-    mfrc522.PCD_Init();             // Init MFRC522
-    mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
+    
     //RFID_Flag=false;
   }
+  mfrc522.PCD_Init();             // Init MFRC522
+  mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
   M5.Lcd.setCursor(0, 125, 4);
   M5.Lcd.print("UID:");
   if (!mfrc522.PICC_IsNewCardPresent() || ! mfrc522.PICC_ReadCardSerial()) {
     return;
   }
   for (byte i = 0; i < mfrc522.uid.size; i++) {
-    Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
-    Serial.print(mfrc522.uid.uidByte[i], HEX);
     M5.Lcd.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
     M5.Lcd.print(mfrc522.uid.uidByte[i], HEX);
   }
@@ -461,66 +460,66 @@ void rfid(){
 int rx_num = 0;
 int rx_count = 0;
 void uart232(){
-    if(!setup_flag){
+  if(!setup_flag){
     setup_flag = 1;
     gpio_reset_pin(GPIO_NUM_16);
     gpio_reset_pin(GPIO_NUM_17);
     Serial2.begin(115200, SERIAL_8N1, 16, 17);
-    M5.Lcd.setCursor(80, 30, 4);
+    M5.Lcd.setCursor(120, 0, 4);
     M5.Lcd.print("RS232");
-    M5.Lcd.setCursor(0, 60, 4);
-    M5.Lcd.println("PIN :TX:17,RX:16");
+    M5.Lcd.setCursor(0, 30, 4);
+    M5.Lcd.println("PIN: TX:17\n          RX:16");
     rx_count = 0;
     rx_num = 0;
-   }
-
-   if(Serial2.available()) {
-    int ch = Serial2.read();
-    //Serial.write(ch);
-    if(ch == 'a'){
-      rx_num++;
     }
-    M5.Lcd.setCursor(30, 120, 4);
-    M5.Lcd.printf("rx_num = %d\n", rx_num);
+
+    if(Serial2.available()) {
+      int ch = Serial2.read();
+      //Serial.write(ch);
+      if(ch == 'a'){
+        rx_num++;
+      }
+      M5.Lcd.setCursor(0, 125, 4);
+      M5.Lcd.printf("rx_num = %d\n", rx_num);
   }
   rx_count++;
   if(rx_count > 100)rx_count = 0;
   if(rx_count == 10)
-    Serial2.write('a');
+  Serial2.write('a');
 }
 
 //int rx_num = 0;
 //int rx_count = 0;
 void uart485(){
-    if(!setup_flag){
+  if(!setup_flag){
     setup_flag = 1;
     gpio_reset_pin(GPIO_NUM_16);
     gpio_reset_pin(GPIO_NUM_17);
-    gpio_reset_pin(GPIO_NUM_21);
-    gpio_reset_pin(GPIO_NUM_22);
+    // gpio_reset_pin(GPIO_NUM_21);
+    // gpio_reset_pin(GPIO_NUM_22);
     Serial2.begin(115200, SERIAL_8N1, 16, 17);
     Serial1.begin(115200, SERIAL_8N1, 22, 21);
-    M5.Lcd.setCursor(80, 0, 4);
+    M5.Lcd.setCursor(110, 0, 4);
     M5.Lcd.print("RS485");
-    M5.Lcd.setCursor(0, 60, 4);
-    M5.Lcd.println("PIN :TX:17,RX:16");
+    M5.Lcd.setCursor(0, 30, 4);
+    M5.Lcd.println("PIN: TX:17\n          RX:16");
     rx_count = 0;
     rx_num = 0;
-   }
+  }
 
-   if(Serial1.available()) {
+  if(Serial1.available()) {
     int ch = Serial1.read();
     //Serial.write(ch);
     if(ch == 'a'){
       rx_num++;
     }
-    M5.Lcd.setCursor(30, 120, 4);
+    M5.Lcd.setCursor(0, 125, 4);
     M5.Lcd.printf("rx_num = %d\n", rx_num);
   }
   rx_count++;
   if(rx_count > 100)rx_count = 0;
   if(rx_count == 10)
-    Serial2.write('a');
+  Serial2.write('a');
 }
 
 void setup() {
