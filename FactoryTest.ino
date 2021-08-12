@@ -586,7 +586,6 @@ void loop() {
     case 11:servo();
     break;
     case 12:stmpmotor();
-    mfrc522.PCD_Reset();
     break;
     case 13:rfid();
     break;
