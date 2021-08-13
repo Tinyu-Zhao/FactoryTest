@@ -382,6 +382,8 @@ const int MOTOR_B = 5;
 const int MOTOR_C = 12;
 const int MOTOR_D = 13;
 void stmpmotor(void){
+  RFID_Flag=false;
+  M5.Lcd.fillRect(120,210,75,30,BLACK);
   if(!setup_flag){
     setup_flag = 1;
     gpio_reset_pin(GPIO_NUM_2);
@@ -426,40 +428,38 @@ void stmpmotor(void){
 MFRC522 mfrc522(0x28);
 
 void rfid(){
-  if(!setup_flag){
-    setup_flag = 1;
+  M5.Lcd.setCursor(120, 0, 4);
+  M5.Lcd.print("RFID");
+  M5.Lcd.setCursor(0, 30, 4);
+  M5.Lcd.print("PIN: SCL:22\n          SDA:21");
+  M5.Lcd.setCursor(120, 210, 4);
+  M5.Lcd.print("Enter");
+  M5.Lcd.print(RFID_Flag);
+  M5.Lcd.setCursor(0, 125, 4);
+  M5.Lcd.print("UID:");
+  if(RFID_Flag){
+    mfrc522.PCD_Init();             // Init MFRC522
+    mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
+
     gpio_reset_pin(GPIO_NUM_22);
     gpio_reset_pin(GPIO_NUM_21);
     Wire.begin();
 
-    M5.Lcd.setCursor(120, 0, 4);
-    M5.Lcd.print("RFID");
-    M5.Lcd.setCursor(0, 30, 4);
-    M5.Lcd.println("PIN: SCL:22\n          SDA:21");
-    //M5.Lcd.setCursor(127, 210, 4);
-    // M5.Lcd.println("Enter");
-    //if(RFID_Flag){
-    
-    //RFID_Flag=false;
+    if (!mfrc522.PICC_IsNewCardPresent() || ! mfrc522.PICC_ReadCardSerial()) {
+      return;
+    }
+    for (byte i = 0; i < mfrc522.uid.size; i++) {
+      M5.Lcd.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
+      M5.Lcd.print(mfrc522.uid.uidByte[i], HEX);
+    }
   }
-  mfrc522.PCD_Init();             // Init MFRC522
-  mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
-  M5.Lcd.setCursor(0, 125, 4);
-  M5.Lcd.print("UID:");
-  if (!mfrc522.PICC_IsNewCardPresent() || ! mfrc522.PICC_ReadCardSerial()) {
-    return;
-  }
-  for (byte i = 0; i < mfrc522.uid.size; i++) {
-    M5.Lcd.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
-    M5.Lcd.print(mfrc522.uid.uidByte[i], HEX);
-  }
-  M5.Lcd.fillRect(127, 210,30,30,BLACK);
 }
 
-
-int rx_num = 0;
-int rx_count = 0;
+  int rx_num = 0;
+  int rx_count = 0;
 void uart232(){
+  RFID_Flag=false;
+  M5.Lcd.fillRect(120,210,75,30,BLACK);
   if(!setup_flag){
     setup_flag = 1;
     gpio_reset_pin(GPIO_NUM_16);
