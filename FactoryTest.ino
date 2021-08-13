@@ -18,7 +18,6 @@ void joystick(void) {
   M5.Lcd.println("JOYSTICK");
   M5.Lcd.setCursor(0, 30 ,4);
   M5.Lcd.println("PIN: X_ADC    35\n        \t  Y_ADC    36\n        \t  BUTTON  2");
-
   if(!setup_flag){
     setup_flag = 1;
     gpio_reset_pin(GPIO_NUM_2);
@@ -440,6 +439,9 @@ void rfid(){
   }
   Wire.beginTransmission(0x28);
   int error = Wire.endTransmission();
+  M5.Lcd.setCursor(0, 180, 4);
+  M5.Lcd.print(error);
+
   if(error==0){
     mfrc522.PCD_Init();             // Init MFRC522
     mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
