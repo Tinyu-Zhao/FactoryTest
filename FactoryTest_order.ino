@@ -79,33 +79,33 @@ void loop() {
     break;
      case 2:adc();
     break;
-    case 3:encoder();
+    case 3:temperature();
     break;
-    case 4:matrix();
+    case 4:air();
     break;
-    case 5:temperature();
+    case 5:rfid();
     break;
-    case 6:air();
+    case 6:luminosity();  //microphone
     break;
     case 7:luminosity();
     break;
-    case 8:key();
+    case 8:matrix();
     break;
-    case 9:dcmotor();
+    case 9:servo();
     break;
-    case 10:relay();
+    case 10:dcmotor();
     break;
-    case 11:servo();
+    case 11:encoder();
     break;
     case 12:stmpmotor();
     break;
-    case 13:rfid();
+    case 13:key();
     break;
-    case 14:uart232();
+    case 14:relay();
     break;
-    case 15:uart485();
+    case 15:uart232();
     break;
-    case 16:luminosity(); //microphone
+    case 16:uart485();
     break;
     default:break;
   }
